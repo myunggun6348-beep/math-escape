@@ -1,6 +1,7 @@
 export const difficultyLabels={basic:'기본',standard:'보통',advanced:'심화'} as const;
 export type Difficulty=keyof typeof difficultyLabels;
 export const courseUnits:Record<string,string[]>={
+'수학 종합':[],
 '공통수학1':['다항식','방정식','경우의 수'],'기본수학1':['다항식','방정식','경우의 수'],
 '공통수학2':['도형의 방정식','집합과 명제','함수'],'기본수학2':['도형의 방정식','집합과 명제','함수'],
 '대수':['지수와 로그','삼각함수','수열'],'미적분Ⅰ':['함수의 극한','미분','적분'],

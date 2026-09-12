@@ -6,7 +6,7 @@ import {createElement} from 'react';
 import {loadModule} from './test-loader.mjs';
 const database=new DatabaseSync(':memory:');for(const f of readdirSync('drizzle').filter(f=>f.endsWith('.sql')).sort())database.exec(readFileSync('drizzle/'+f,'utf8').replaceAll('--> statement-breakpoint',''));
 globalThis.testDb={prepare(sql){let values=[];return{bind(...v){values=v;return this},async first(){return database.prepare(sql).get(...values)||null},async all(){return{results:database.prepare(sql).all(...values)}},async run(){return{meta:database.prepare(sql).run(...values)}}}}};
-const {questions,courses}=await loadModule('lib/questions-v3.ts');const {courseUnits,validateSettings}=await loadModule('lib/game-settings.ts');const {numericAnswer}=await loadModule('lib/numeric-answer.ts');const {POST,GET}=await loadModule('app/api/game/route.ts');const MathExpression=(await loadModule('components/math-expression.tsx')).default,MathDiagram=(await loadModule('components/math-diagram.tsx')).default;
+const {questions,courses}=await loadModule('lib/questions-v3.ts');const {questions:current,courses:playable,mixedSubjects,isCorrectAnswer}=await loadModule('lib/questions-v4.ts');const {courseUnits,validateSettings}=await loadModule('lib/game-settings.ts');const {numericAnswer}=await loadModule('lib/numeric-answer.ts');const {POST,GET}=await loadModule('app/api/game/route.ts');const MathExpression=(await loadModule('components/math-expression.tsx')).default,MathDiagram=(await loadModule('components/math-diagram.tsx')).default;
 let questionCount=0,diagramCount=0;const kinds=new Set();
 for(const c of courses)for(const unit of ['all',...courseUnits[c]])for(const difficulty of ['basic','standard','advanced'])for(const seed of [0,1,2]){
  const qs=questions(c,3,{unit,difficulty},seed);assert.equal(qs.length,6);assert.deepEqual(qs,questions(c,3,{unit,difficulty},seed));
@@ -22,11 +22,36 @@ async function post(body,user='teacher'){const response=await POST(new Request('
 async function get(path,user='teacher'){const response=await GET(new Request('https://game.test/api/game'+path,{headers:{'oai-authenticated-user-id':user}}));return{status:response.status,...await response.json()};}
 const room=await post({action:'create',course:'미적분Ⅰ',unit:'적분',difficulty:'advanced'});assert.equal(room.status,200);const stored=database.prepare('SELECT * FROM rooms WHERE code=?').get(room.code);assert.equal(stored.unit,'적분');assert.equal(stored.difficulty,'advanced');
 const start=await post({action:'start',code:room.code,course:'대수',unit:'수열',difficulty:'basic',student:'01'},'student');assert.equal(start.status,200);let run=start.run;assert.equal(run.course,'미적분Ⅰ');assert.deepEqual(run.state.settings,{unit:'적분',difficulty:'advanced'});assert.equal(run.deadline-run.started,900000);assert.ok(run.questions.every(q=>q.unit==='적분'&&q.answer===undefined&&q.explanation===undefined));const start2=await post({action:'start',code:room.code,student:'02'},'student2');assert.deepEqual(start.run.questions,start2.run.questions);
-const expected=questions(run.course,3,run.state.settings,run.state.seed);const wrong=await post({action:'answer',id:run.id,question:0,answer:'-999'},'student');assert.equal(wrong.run.state.score,0);
-for(let stage=0;stage<3;stage++){for(const i of [stage*2,stage*2+1]){const d=await post({action:'answer',id:run.id,question:i,answer:String(expected[i].answer)},'student');assert.equal(d.status,200);const duplicate=await post({action:'answer',id:run.id,question:i,answer:String(expected[i].answer)},'student');assert.equal(d.run.state.score,duplicate.run.state.score);}run=(await post({action:'next',id:run.id},'student')).run;}
+const expected=current(run.course,4,run.state.settings,run.state.seed);const wrong=await post({action:'answer',id:run.id,question:0,answer:'-999'},'student');assert.equal(wrong.run.state.score,0);
+for(let stage=0;stage<3;stage++){for(const i of [stage*2,stage*2+1]){const d=await post({action:'answer',id:run.id,question:i,answer:expected[i].correctChoice??String(expected[i].answer)},'student');assert.equal(d.status,200);const duplicate=await post({action:'answer',id:run.id,question:i,answer:expected[i].correctChoice??String(expected[i].answer)},'student');assert.equal(d.run.state.score,duplicate.run.state.score);}run=(await post({action:'next',id:run.id},'student')).run;}
 assert.equal(run.state.score,1025);assert.equal(run.state.escaped,true);assert.equal((await get('?teacher=1&room='+room.code,'student')).status,403);assert.equal((await get('?teacher=1&room='+room.code)).records.length,2);
 const expired=start2.run;database.prepare('UPDATE runs SET started=? WHERE id=?').run(Date.now()-901000,expired.id);const ended=await post({action:'answer',id:expired.id,question:0,answer:'1'},'student2');assert.equal(ended.run.state.done,true);assert.equal(ended.run.state.score,0);
 const fractions=(await post({action:'start',course:'확률과 통계',unit:'확률',difficulty:'basic',student:'03'},'fraction')).run;const correct=await post({action:'answer',id:fractions.id,question:0,answer:'2/4'},'fraction');assert.equal(correct.run.state.score,125);assert.equal(numericAnswer('1/0'),null);
 // Keep old completed and unfinished games on their original question version.
-for(const version of [1,2]){const old=(await post({action:'start',course:'확률과 통계',student:'old'},'old'+version)).run;const state={solved:[],hints:[],attempts:{},score:0,stage:0,done:false,escaped:false};if(version===2)state.questionVersion=2;database.prepare('UPDATE runs SET state=? WHERE id=?').run(JSON.stringify(state),old.id);const restored=await get('?id='+old.id,'old'+version);assert.equal(restored.run.questions[0].prompt,questions('확률과 통계',version)[0].prompt);const answer=questions('확률과 통계',version)[0].answer;const scored=await post({action:'answer',id:old.id,question:0,answer:String(answer)},'old'+version);assert.equal(scored.run.state.score,125);}
+for(const version of [1,2,3]){const old=(await post({action:'start',course:'확률과 통계',student:'old'},'old'+version)).run;const state={solved:[],hints:[],attempts:{},score:0,stage:0,done:false,escaped:false};if(version>=2)state.questionVersion=version;database.prepare('UPDATE runs SET state=? WHERE id=?').run(JSON.stringify(state),old.id);const restored=await get('?id='+old.id,'old'+version);assert.equal(restored.run.questions[0].prompt,questions('확률과 통계',version)[0].prompt);const answer=questions('확률과 통계',version)[0].answer;const scored=await post({action:'answer',id:old.id,question:0,answer:String(answer)},'old'+version);assert.equal(scored.run.state.score,125);}
+let mixedCount=0;
+for(const c of playable)for(const unit of ['all',...courseUnits[c]])for(const difficulty of ['basic','standard','advanced'])for(const seed of [0,1,2]){
+ const qs=current(c,4,{unit,difficulty},seed);assert.deepEqual(qs,current(c,4,{unit,difficulty},seed));
+ assert.equal(qs.filter(q=>q.format==='choice').length,3);assert.equal(qs.filter(q=>q.format==='short').length,3);
+ if(c==='수학 종합')assert.deepEqual(new Set(qs.map(q=>q.course)),new Set(mixedSubjects));
+ for(const q of qs){mixedCount++;if(q.format==='choice'){
+  assert.equal(q.choices.length,5);assert.equal(new Set(q.choices.map(c=>numericAnswer(c.label))).size,5);
+  assert.equal(q.choices.filter(c=>Math.abs(numericAnswer(c.label)-q.answer)<1e-9).length,1);
+  for(const choice of q.choices)assert.equal(isCorrectAnswer(q,choice.id),Math.abs(numericAnswer(choice.label)-q.answer)<1e-9);
+  assert.throws(()=>isCorrectAnswer(q,String(q.answer)));assert.throws(()=>isCorrectAnswer(q,'option-6'));
+ }else assert.ok(isCorrectAnswer(q,String(q.answer)));}
+}
+const mixedRoom=await post({action:'create',course:'수학 종합'});assert.equal(mixedRoom.status,200);
+const mixedStart=await post({action:'start',code:mixedRoom.code,course:'확률과 통계',student:'mix'},'mix');
+assert.equal(mixedStart.run.course,'수학 종합');assert.equal(mixedStart.run.state.questionVersion,4);
+assert.equal(new Set(mixedStart.run.questions.map(q=>q.course)).size,6);
+for(const q of mixedStart.run.questions){assert.equal(q.correctChoice,undefined);assert.equal(q.answerText,undefined);assert.equal(q.answer,undefined);}
+const mixedQs=current('수학 종합',4,mixedStart.run.state.settings,mixedStart.run.state.seed);
+await post({action:'answer',id:mixedStart.run.id,question:0,answer:String(mixedQs[0].answer)},'mix');
+const invalid=await post({action:'answer',id:mixedStart.run.id,question:1,answer:'option-6'},'mix');assert.equal(invalid.status,400);
+const choiceWrong=await post({action:'answer',id:mixedStart.run.id,question:1,answer:mixedQs[1].choices.find(c=>c.id!==mixedQs[1].correctChoice).id},'mix');assert.equal(choiceWrong.run.state.score,125);
+const choiceRight=await post({action:'answer',id:mixedStart.run.id,question:1,answer:mixedQs[1].correctChoice},'mix');assert.equal(choiceRight.run.state.score,325);
+assert.equal(choiceRight.run.questions[1].answerText,mixedQs[1].answerText);assert.equal(choiceRight.run.questions[1].correctChoice,undefined);
+assert.deepEqual((await get('?id='+mixedStart.run.id,'mix')).run.questions,choiceRight.run.questions);
+console.log('PASS: '+mixedCount+' mixed-format questions; unique choices; both grading formats; mixed classroom; no answer metadata leakage; legacy v1/v2/v3.');
 console.log(`PASS: ${questionCount} generated questions; ${diagramCount} diagrams; all courses, units and levels; classroom override; stable seeds; legacy scores; fractions; 15-minute deadline.`);

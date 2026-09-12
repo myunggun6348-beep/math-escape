@@ -73,3 +73,11 @@ node scripts/check-settings.mjs
 성취기준별 문항 확충, 동일 단원 내 유형 다양화, 학생 익명 참여 방식, 실제 수업 난이도 조정은 별도 작업으로 진행할 수 있다.
 
 참고: [OpenAI 공식 프로젝트 안내](https://learn.chatgpt.com/docs/projects), [앱에서 폴더 열기](https://learn.chatgpt.com/docs/app).
+
+## 2026-09-12 혼합 출제 업데이트
+
+- 새 게임은 문제 버전 4를 사용한다. 버전 1·2·3의 기존 기록은 원래 출제를 유지한다.
+- 기본 선택은 수학 종합: 공통수학1·2, 대수, 미적분Ⅰ, 확률과 통계, 기하에서 각 1문항이다. 기존 20개 과목별 선택도 유지한다.
+- 오지선다 3문항과 수치 입력형 주관식 3문항을 섞는다. 선택형의 정답 보기 ID는 서버에서만 사용한다.
+- 주요 구현: lib/questions-v4.ts, lib/playable-courses.ts, components/puzzle.tsx.
+- check-settings.mjs는 4,374개 버전 4 문항과 기존 4,320개 문항, 선택지 유일성, 두 답안 형식 채점, 수업방 일관성, 이전 버전 복원을 검사한다.
