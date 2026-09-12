@@ -3,8 +3,10 @@ import {useRef,useState} from 'react';
 import {ArrowRight,Check,Clock3,KeyRound,Lightbulb,Sparkles,X} from 'lucide-react';
 import {Dialog,DialogContent,DialogTitle,DialogDescription} from '@/components/ui/dialog';
 import MathExpression from './math-expression';
-export type VisibleQuestion={id:number;topic:string;prompt:string;formula?:string[];conditions?:string[];ask?:string;points:number;hint?:string;answer?:number;answerText?:string;explanation?:string[]};
-export function ProblemText({question:q}:{question:VisibleQuestion}){return <div className="problem-body"><p className="problem-intro">{q.prompt}</p>{q.conditions&&<div className="given-conditions"><h3>주어진 조건</h3><ul>{q.conditions.map((c,i)=><li key={i}>{c}</li>)}</ul></div>}{!!q.formula?.length&&<div className="formula-panel">{q.formula.map((f,i)=><MathExpression key={i} source={f}/>)}</div>}{q.ask&&<p className="problem-ask"><span>구할 값</span>{q.ask}</p>}</div>}
+import MathDiagram from './math-diagram';
+import type {Diagram} from '@/lib/game-settings';
+export type VisibleQuestion={id:number;topic:string;prompt:string;formula?:string[];conditions?:string[];ask?:string;points:number;hint?:string;answer?:number;answerText?:string;explanation?:string[];diagram?:Diagram};
+export function ProblemText({question:q}:{question:VisibleQuestion}){return <div className="problem-body"><p className="problem-intro">{q.prompt}</p>{q.conditions&&<div className="given-conditions"><h3>주어진 조건</h3><ul>{q.conditions.map((c,i)=><li key={i}>{c}</li>)}</ul></div>}{!!q.formula?.length&&<div className="formula-panel">{q.formula.map((f,i)=><MathExpression key={i} source={f}/>)}</div>}{q.diagram&&<MathDiagram diagram={q.diagram}/ >}{q.ask&&<p className="problem-ask"><span>구할 값</span>{q.ask}</p>}</div>}
 export default function Puzzle({open,onClose,question:q,solved,time,score,busy,answer,setAnswer,message,error,onAnswer,onHint}:{open:boolean;onClose:()=>void;question?:VisibleQuestion;solved:boolean;time:string;score:number;busy:boolean;answer:string;setAnswer:(s:string)=>void;message:string;error:string;onAnswer:()=>void;onHint:()=>void}){
  const [large,setLarge]=useState(false);const title=useRef<HTMLHeadingElement>(null);
  return <Dialog open={open} onOpenChange={v=>{if(!v)onClose();}}><DialogContent showCloseButton={false} className={'puzzle-reader'+(large?' reader-large':'')} onOpenAutoFocus={e=>{e.preventDefault();title.current?.focus();}}>

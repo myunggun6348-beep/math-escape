@@ -1,4 +1,10 @@
-# vinext-starter
+# 마지막 종이 울리기 전에
+
+수학 교실 탈출 게임입니다. 프로젝트 인계, 기능과 검증 방법은 [CODEX_HANDOFF.md](CODEX_HANDOFF.md)를 먼저 읽으세요.
+
+이 프로젝트는 `pnpm-lock.yaml`을 사용합니다. 아래 원본 스타터 설명의 `npm run …`은 `pnpm run …`으로 읽고, 설치에는 `pnpm install --frozen-lockfile`을 사용하세요. `npm ci`로 전환하지 않습니다.
+
+## 원본 스타터 실행 안내
 
 A clean full-stack starter running on [vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and Drizzle support.
 

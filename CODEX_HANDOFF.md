@@ -1,0 +1,75 @@
+# 수학 교실 탈출 게임 — Codex 프로젝트 인계
+
+## 이 프로젝트
+
+- 이름: 마지막 종이 울리기 전에 (After the Bell)
+- 배포 주소: https://last-bell-math-escape.gun777.chatgpt.site
+- 대상: 고등학생, 수업 시간의 태블릿·스마트폰
+- 게임: 15분, 방 3개, 필수 3문제와 선택 3문제. 오답 감점 없음.
+- 기술: React 19, TypeScript, Vinext, Cloudflare Worker, D1, Drizzle, pnpm.
+- 현재 공유 범위: 소유자 전용. 학생에게 공개하는 작업은 별도 요청에 따라 진행.
+
+## Codex로 이어가기
+
+1. 제공된 소스 ZIP을 `math-escape` 폴더에 압축 해제한다.
+2. Codex에서 이 **폴더**를 프로젝트로 연다. 프로젝트 이름만 새로 만드는 것으로 코드가 복사되지는 않는다.
+3. 먼저 이 문서와 README.md를 읽고, 실제 사용 환경에 맞춰 실행 프로필을 선택하도록 요청한다.
+4. 아래의 첫 요청을 보낸다.
+
+> CODEX_HANDOFF.md와 README.md를 읽고 이 수학 탈출 게임을 이어서 개발해줘. 기존 Sites 프로젝트 ID, 저장된 점수, 이전 문제 버전, 15분 제한을 유지해줘. 설치와 실행 환경을 확인하고 테스트부터 실행해줘. 현재 기능을 새 프로젝트로 다시 만들지 말아줘.
+
+ZIP에는 소스와 이미지가 포함되며 node_modules, 로그인 토큰, 실제 학생 기록, 배포용 비밀값은 포함되지 않는다. 의존성은 잠금 파일로 다시 설치한다. 소스 복사는 학생 기록 복사가 아니다.
+
+## 실행 환경
+
+- Sites 플러그인이 있으면 해당 스킬로 기존 프로젝트를 열고 `.openai/hosting.json`의 project_id를 재사용한다. 새 Site를 생성하지 않는다.
+- 현재 체크아웃은 managed-linux 환경이다. 개인 Windows/macOS/Linux에서는 Sites 실행 프로필을 portable로 다시 설정한다. `.sites-runtime`은 로컬 생성 폴더이며 소스 ZIP에 포함하지 않는다.
+- pnpm-lock.yaml이 기준이다. npm으로 전환하거나 잠금 파일을 삭제하지 않는다.
+- 로컬 미리보기는 README의 portable 개발 환경과 로컬 D1 마이그레이션 절차를 따른다.
+- 실제 로그인은 Sites의 인증 헤더를 사용한다. 다른 호스팅으로 옮기려면 인증과 D1 연결을 별도로 설계해야 한다. 단순 정적 HTML 호스팅으로는 점수 저장 API가 동작하지 않는다.
+- 원래 사이트에 다시 게시하려면 같은 계정의 Sites 연결과 저장소 접근 권한이 필요하다. ZIP만으로 배포 권한이 부여되지는 않는다.
+
+## 주요 파일
+
+| 위치 | 역할 |
+|---|---|
+| app/game.tsx | 학생·교사 화면과 게임 흐름 |
+| components/puzzle.tsx | 밝은 문제 창, 입력, 힌트, 해설 |
+| components/settings-picker.tsx | 단원·난이도 선택 |
+| components/math-expression.tsx | MathML 수식 표시 |
+| components/math-diagram.tsx | 실제 문제 수치로 생성하는 SVG 그래프·도형 |
+| lib/game-settings.ts | 20개 과목의 대표 단원과 설정 검증 |
+| lib/questions-v3.ts | 난이도·단원별 새 문항 생성 |
+| lib/questions-v2.ts, lib/bank.ts | 이전 게임의 문제 재현 |
+| app/api/game/route.ts | 서버 채점·시간 제한·수업방 소유권 확인 |
+| db/schema.ts, drizzle/ | 저장 구조와 적용 이력 |
+| scripts/check-settings.mjs | 현행 설정·채점·그래프·이전 기록 회귀 검사 |
+
+## 유지할 규칙
+
+- 정답과 해설은 서버에서 관리한다. 미해결 문제의 정답은 브라우저로 보내지 않는다.
+- 새 게임은 버전 3의 단원·난이도·seed를 저장한다. 같은 수업방의 학생은 같은 문항을 받는다.
+- 버전 1·2 기록은 원래 문제와 정답으로 재현한다. 이미 출제된 버전을 바꾸려면 새 문제 버전을 추가한다.
+- 수업방의 과목·단원·난이도가 학생의 임의 입력보다 우선한다.
+- 15분 제한은 서버 시작 시각으로 판정한다. 새로고침으로 초기화하지 않는다.
+- 데이터 저장은 D1이다. localStorage에는 이어하기용 기록 ID만 저장한다.
+- 이미 배포된 drizzle 마이그레이션은 수정하지 않는다. 변경은 새 마이그레이션으로 추가한다.
+- 전체 성취기준을 망라한 문제은행은 아니다. 현재는 과목별 대표 단원·유형이며 실제 평가에 쓰기 전 교사의 검토가 필요하다.
+- 난이도는 기본(직접 개념), 보통(조건 적용), 심화(개념 결합)이다. 보너스는 같은 단계 또는 한 단계 높은 유형이다.
+
+## 확인 명령
+
+Node 24 환경에서:
+
+```sh
+node node_modules/typescript/bin/tsc --noEmit
+node scripts/check-settings.mjs
+```
+
+빌드·마이그레이션·게시 절차는 설치된 Sites 스킬을 따른다. 브라우저 실기기 검증은 아직 별도로 실시하지 않았다.
+
+## 앞으로의 확장
+
+성취기준별 문항 확충, 동일 단원 내 유형 다양화, 학생 익명 참여 방식, 실제 수업 난이도 조정은 별도 작업으로 진행할 수 있다.
+
+참고: [OpenAI 공식 프로젝트 안내](https://learn.chatgpt.com/docs/projects), [앱에서 폴더 열기](https://learn.chatgpt.com/docs/app).
