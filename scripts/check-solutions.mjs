@@ -1,0 +1,35 @@
+import assert from 'node:assert/strict';
+import {readFileSync,readdirSync} from 'node:fs';
+import {DatabaseSync} from 'node:sqlite';
+import {loadModule} from './test-loader.mjs';
+const database=new DatabaseSync(':memory:');for(const f of readdirSync('drizzle').filter(f=>f.endsWith('.sql')).sort())database.exec(readFileSync('drizzle/'+f,'utf8').replaceAll('--> statement-breakpoint',''));
+globalThis.testDb={prepare(sql){let values=[];return{bind(...v){values=v;return this},async first(){return database.prepare(sql).get(...values)||null},async all(){return{results:database.prepare(sql).all(...values)}},async run(){return{meta:database.prepare(sql).run(...values)}}}}};
+const {POST:game}=await loadModule('app/api/game/route.ts');const {GET,POST}=await loadModule('app/api/solutions/route.ts');
+async function post(fn,body,user='student',origin='https://game.test'){const r=await fn(new Request('https://game.test/api/solutions',{method:'POST',headers:{'oai-authenticated-user-id':user,'Content-Type':'application/json',origin},body:JSON.stringify(body)}));return{status:r.status,...await r.json()};}
+async function get(run,user,query=''){const r=await GET(new Request('https://game.test/api/solutions?run='+run+query,{headers:{'oai-authenticated-user-id':user}}));return{status:r.status,...await r.json()};}
+const room=await post(game,{action:'create',course:'수학 종합'},'teacher');
+const {run}=await post(game,{action:'start',code:room.code,student:'01'});
+const drawing=[{points:[{x:100,y:100},{x:250,y:150}],color:'#19364a',width:5,erase:false}];
+const input={runId:run.id,question:0,drawing,revision:0};
+assert.equal((await get(run.id,'teacher')).submissions.length,0);
+assert.equal((await post(POST,input,'other-student')).status,403);
+assert.equal((await post(POST,input,'teacher')).status,403);
+assert.equal((await post(POST,input,'student','https://evil.test')).status,403);
+for(const bad of [[],[{...drawing[0],points:[{x:-1,y:2}]}],[{...drawing[0],color:'url(javascript:1)'}],[{...drawing[0],points:Array.from({length:15001},()=>({x:1,y:2}))}]])assert.equal((await post(POST,{...input,drawing:bad})).status,400);
+assert.equal((await post(POST,{...input,question:1})).status,403);assert.equal((await post(POST,{...input,question:4})).status,403);
+const before=database.prepare('SELECT state,version FROM runs WHERE id=?').get(run.id);
+const first=await post(POST,input);assert.equal(first.status,200);assert.equal(first.submission.revision,1);assert.equal(first.submission.afterDeadline,false);
+assert.deepEqual((await get(run.id,'teacher')).submissions[0].drawing,drawing);
+assert.deepEqual((await get(run.id,'student')).submissions[0].drawing,drawing);
+assert.equal((await get(run.id,'other-student')).status,403);assert.equal((await get(run.id,'other-teacher')).status,403);
+assert.equal((await post(POST,input)).status,409);
+const revised=[...drawing,{points:[{x:200,y:200}],color:'#195aca',width:3,erase:false}];
+const second=await post(POST,{...input,drawing:revised,revision:1});assert.equal(second.status,200);assert.equal(second.submission.revision,2);
+assert.equal((await get(run.id,'teacher','&question=0')).submissions.length,1);assert.equal((await get(run.id,'teacher','&question=1')).submissions.length,0);
+assert.deepEqual(database.prepare('SELECT state,version FROM runs WHERE id=?').get(run.id),before);
+database.prepare('UPDATE runs SET started=? WHERE id=?').run(Date.now()-901000,run.id);
+const late=await post(POST,{...input,revision:2});assert.equal(late.submission.afterDeadline,true);assert.equal(late.submission.revision,3);
+const practice=await post(game,{action:'start',course:'공통수학1',student:'practice'},'practice');assert.equal((await post(POST,{...input,runId:practice.run.id},'practice')).status,400);
+assert.equal((await post(POST,{...input,drawing:'x'.repeat(800001)})).status,400);
+const restarted=await get(run.id,'teacher');assert.equal(restarted.submissions[0].revision,3);assert.equal(database.prepare('SELECT count(*) AS n FROM solutions').get().n,1);
+console.log('PASS: owner-only submission, classroom teacher access, cross-student and cross-teacher rejection, request limits, drawing validation, locked questions, persistent retrieval, revision conflict, resubmission, late flag, unchanged game score/state.');

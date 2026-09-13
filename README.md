@@ -4,6 +4,32 @@
 
 이 프로젝트는 `pnpm-lock.yaml`을 사용합니다. 아래 원본 스타터 설명의 `npm run …`은 `pnpm run …`으로 읽고, 설치에는 `pnpm install --frozen-lockfile`을 사용하세요. `npm ci`로 전환하지 않습니다.
 
+## 현재 구현된 기능
+
+- 수학 종합(공통수학1·2, 대수, 미적분Ⅰ, 확률과 통계, 기하) 및 기존 20개 과목별 출제
+- 한 게임에 오지선다 3문항과 수치 입력형 주관식 3문항, 15분 제한
+- 문제별 태블릿 필기판: 펜·색상·굵기·지우개·실행 취소·다시 실행
+- 수업방 학생의 손글씨 풀이 제출·재제출, 교사의 학생별·문제별 최신 제출본 조회
+- 제출 시각·제출 차수·종료 후 제출 표시, 수업방별 접근 권한 확인
+- 기존 버전 1·2·3의 게임 기록과 채점 기준 유지
+
+작성 중 필기는 현재 브라우저 탭에 임시 보관됩니다. 학생이 제출한 손글씨는 좌표 데이터로 D1에 저장됩니다. 풀이 제출은 점수에 영향을 주지 않으며, 자동 손글씨 채점은 포함하지 않습니다.
+
+### 검증
+
+```sh
+node node_modules/typescript/bin/tsc --noEmit
+node scripts/check-settings.mjs
+node scripts/check-solutions.mjs
+pnpm run build
+```
+
+학생 제출·교사 조회·재제출·네트워크 오류 후 재시도 흐름은 로컬 브라우저에서도 검증했습니다. 실제 태블릿 펜의 필기감은 별도 기기 검증이 필요합니다.
+
+### 저장소 범위
+
+이 저장소는 소스 코드와 이미지, 데이터베이스 마이그레이션을 보관합니다. 의존성 폴더, 로컬 데이터베이스 및 학생 테스트 기록, 로그인 정보, 빌드 결과물은 포함하지 않습니다. GitHub에 올리는 것은 기존 Sites 사이트를 배포하는 것과 별개입니다.
+
 ## 원본 스타터 실행 안내
 
 A clean full-stack starter running on [vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and Drizzle support.
