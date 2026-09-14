@@ -1,0 +1,26 @@
+/* Keep the classroom atmosphere, with high-contrast surfaces for reading. */
+body{font-family:'Noto Sans KR','Malgun Gothic',system-ui,sans-serif;font-size:17px;line-height:1.75;word-break:keep-all;overflow-wrap:break-word}
+.entry-panel,.journal,.teacher .panel{background:#f7fafc;color:#172e3d;border-color:#c9d7e1}
+.entry-panel .amber,.journal .amber,.teacher .panel .amber,.teacher .panel .source,.teacher .panel .code{color:#79520c}
+.entry-panel h2,.journal h2,.journal h3,.teacher .panel h2{color:#172e3d;font-weight:750}
+.entry-panel label,.teacher .panel label{color:#243f50;font-size:1rem}
+.entry-panel .muted,.entry-panel .optional,.entry-panel .settings-picker>p,.entry-panel .entry-bottom,.entry-panel .mission-note span,.journal .muted,.journal .identity,.journal .identity small,.journal .task-row small,.journal .save-note,.teacher .panel .fine,.teacher .panel .save-note,.teacher .panel .empty{color:#435e6f;font-size:.95rem}
+.entry-panel input,.entry-panel .course-select,.teacher .panel input,.teacher .panel .course-select{background:#fff;color:#183344;border:1px solid #8199ab;font-size:1.05rem;min-height:54px}
+.entry-panel input::placeholder,.teacher .panel input::placeholder{color:#526b7b;opacity:1}
+.entry-panel .quiet,.teacher .panel .quiet{background:white;color:#264c63;border-color:#93aabc;font-size:1rem}
+.entry-panel .mission-note{color:#79520c;border-color:#c5d5df;font-size:1rem}
+.entry-panel .primary,.journal .primary,.teacher .panel .primary{background:#214e67;color:#fff;font-size:1.05rem}
+.entry-panel .primary:hover:not(:disabled),.journal .primary:hover:not(:disabled),.teacher .panel .primary:hover:not(:disabled){background:#163c52}
+.journal .task-row{color:#203e51;border-color:#cad8e1;font-size:1rem}.journal .keys>div{color:#526b7a;border-color:#8ca1ad}.journal .keys .earned{color:#75510d;background:#fff0cc;border-color:#a77b29}
+.teacher .panel .room-list button{background:#fff;color:#203e51;border-color:#afc2cf}.teacher .panel .room-list button.selected{background:#e7f0f6;border-color:#356a8b}.teacher .panel .room-list small{color:#486576}.teacher .panel .room-list b{color:#79520c}.teacher .results-panel th{color:#385768}.teacher .results-panel td{color:#183344}
+.intro-copy p,.scene-stats{font-size:1.05rem;color:#fff}.intro-copy{text-shadow:0 2px 6px #000}.scene-shade{background:linear-gradient(180deg,#08131c55 0%,#08131c22 20%,#08131cf5 85%)}
+.scene-top .pill{background:#101e29;color:#fff;font-size:.9rem}.scene-top .eyebrow{background:#101e29e8;padding:6px 10px;border-radius:5px;color:#fff}
+.room-caption{background:#101f2bef;border:1px solid #6c8390;border-radius:8px;padding:12px 16px;color:#fff;font-size:1rem;line-height:1.7;text-shadow:none}
+.hotspot{background:#122c3d;color:#fff;border:2px solid #f3ca7e;font-size:1rem;padding:12px 16px}.hotspot small{font-size:.9rem;color:#e0e9ef}.hotspot:disabled{opacity:1;background:#25343f;color:#bac8d2;border-color:#74828d;box-shadow:none}.hotspot:disabled>span{background:#647786;color:#fff}.hotspot:disabled small{color:#bac8d2}
+.touch-note{left:20px;right:20px;bottom:12px;background:#101f2bef;border-radius:6px;padding:7px 10px;font-size:.95rem;color:#fff}
+.puzzle-reader{--reading-size:1.3rem;color:#172e3d!important}.puzzle-reader .reader-title,.puzzle-reader .problem-body,.puzzle-reader .choice-fieldset legend{color:#172e3d!important}.puzzle-reader .reader-description{color:#405d70!important}
+.puzzle-reader.reader-large{--reading-size:1.55rem}.puzzle-reader .reader-labels,.puzzle-reader .answer-format,.puzzle-reader .score-rule,.puzzle-reader .problem-footnote{color:#405d70;font-size:1rem}.puzzle-reader .answer-choice{font-size:1.1rem;min-height:56px;margin-bottom:8px}.puzzle-reader .reader-columns{grid-template-columns:minmax(0,1.35fr) minmax(310px,1fr)}
+.answer-sheet input[type=radio]{width:20px;height:20px;min-height:20px;padding:0;flex:0 0 20px;accent-color:#214e67}
+.scratchpad .finger-drawing input[type=checkbox]{min-height:20px;width:20px;height:20px;padding:0;flex:0 0 20px}.scratchpad-help,.scratchpad-heading>span,.scratchpad .finger-drawing{font-size:1rem;color:#3f596b}
+@media(max-width:1000px){.puzzle-reader .reader-columns{grid-template-columns:1fr}.puzzle-reader .answer-sheet{border-left:0;border-top:1px solid #cbd9e3}}
+@media(max-width:700px){.intro-copy p,.scene-stats{font-size:1rem}.intro-copy h1{font-size:2.4rem}.scene-stats{gap:12px}.room-caption{font-size:.95rem;top:12px;left:12px;right:12px;padding:10px}.puzzle-reader{--reading-size:1.2rem}.puzzle-reader.reader-large{--reading-size:1.45rem}.entry-panel,.journal{padding:24px 20px}.settings-picker{grid-template-columns:1fr;gap:16px}.brand small,footer{font-size:.85rem}}

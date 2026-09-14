@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./readability.css";
 
 export const metadata: Metadata = {
   title: "마지막 종이 울리기 전에 | 수학 탈출실",
